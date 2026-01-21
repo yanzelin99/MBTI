@@ -22,6 +22,27 @@ export function renderHomePage() {
             </p>
           </div>
 
+          <div class="features-section">
+            <div class="feature-item">
+              <div class="feature-content">
+                <h3 class="feature-title">完全免费</h3>
+                <p class="feature-desc">所有内容永久免费，无需注册或付费</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-content">
+                <h3 class="feature-title">隐私安全</h3>
+                <p class="feature-desc">不收集任何个人信息，数据仅保存在本地</p>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-content">
+                <h3 class="feature-title">专业测试</h3>
+                <p class="feature-desc">基于经典MBTI理论，科学严谨</p>
+              </div>
+            </div>
+          </div>
+
           <div class="info-section">
             <div class="info-item">
               <span class="info-text">预计用时 5-8 分钟</span>
