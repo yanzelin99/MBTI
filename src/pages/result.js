@@ -182,10 +182,7 @@ async function saveAsImage(type, name, dimensionResults) {
     shareSection.innerHTML = `
       <div style="flex: 1;">
         <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
-          扫码分享给朋友
-        </div>
-        <div style="font-size: 14px; color: #6e6e73;">
-          让他们也来测测自己的 MBTI 性格类型吧！
+          长按扫码进行你自己的性格测试
         </div>
       </div>
       <img src="${qrCodeDataUrl}" alt="分享二维码" style="width: 120px; height: 120px; border-radius: 8px; border: 2px solid #1d1d1f;" />
