@@ -2,6 +2,8 @@
 import store from '../store.js';
 import { calculateResults, generateMBTIType, isAllAnswered } from '../scoring.js';
 import { getMBTIResult, dimensionNames } from '../results.js';
+import html2canvas from 'html2canvas';
+import QRCode from 'qrcode';
 
 export function renderResultPage() {
   const app = document.getElementById('app');
@@ -32,7 +34,7 @@ export function renderResultPage() {
       </header>
 
       <main class="page-main">
-        <div class="result-content">
+        <div class="result-content" id="result-content">
           <!-- MBTI 类型展示 -->
           <div class="type-section">
             <div class="type-badge">${mbtiType}</div>
@@ -76,8 +78,8 @@ export function renderResultPage() {
         <button id="restart-btn" class="btn btn-secondary">
           重新测试
         </button>
-        <button id="share-btn" class="btn btn-primary">
-          复制分享文案
+        <button id="save-share-btn" class="btn btn-primary">
+          保存分享
         </button>
       </footer>
     </div>
@@ -85,7 +87,7 @@ export function renderResultPage() {
 
   // 绑定事件
   const restartBtn = document.getElementById('restart-btn');
-  const shareBtn = document.getElementById('share-btn');
+  const saveShareBtn = document.getElementById('save-share-btn');
 
   if (restartBtn) {
     restartBtn.addEventListener('click', () => {
@@ -94,9 +96,9 @@ export function renderResultPage() {
     });
   }
 
-  if (shareBtn) {
-    shareBtn.addEventListener('click', () => {
-      shareResult(mbtiType, resultData.name, dimensionResults);
+  if (saveShareBtn) {
+    saveShareBtn.addEventListener('click', () => {
+      saveAsImage(mbtiType, resultData.name, dimensionResults);
     });
   }
 }
@@ -127,20 +129,94 @@ function renderDimensionBars(dimensionResults) {
   }).join('');
 }
 
-function shareResult(type, name, dimensionResults) {
-  const shareText = `🧠 我的 MBTI 性格类型是：${type} - ${name}\n\n` +
-    `维度分析：\n` +
-    `E/I: ${dimensionResults.EI.leftPercent}% / ${dimensionResults.EI.rightPercent}%\n` +
-    `S/N: ${dimensionResults.SN.leftPercent}% / ${dimensionResults.SN.rightPercent}%\n` +
-    `T/F: ${dimensionResults.TF.leftPercent}% / ${dimensionResults.TF.rightPercent}%\n` +
-    `J/P: ${dimensionResults.JP.leftPercent}% / ${dimensionResults.JP.rightPercent}%\n\n` +
-    `快来测测你的性格类型吧！`;
+async function saveAsImage(type, name, dimensionResults) {
+  showToast('正在生成图片...');
 
-  navigator.clipboard.writeText(shareText).then(() => {
-    showToast('分享文案已复制到剪贴板');
-  }).catch(() => {
-    showToast('复制失败，请手动复制');
-  });
+  const resultContent = document.getElementById('result-content');
+
+  try {
+    // 生成二维码
+    const qrCodeDataUrl = await QRCode.toDataURL('https://mbti.9912.xin', {
+      width: 120,
+      margin: 1,
+      color: {
+        dark: '#1d1d1f',
+        light: '#ffffff'
+      }
+    });
+
+    // 创建临时容器用于截图
+    const container = document.createElement('div');
+    container.style.cssText = `
+      position: fixed;
+      top: -9999px;
+      left: -9999px;
+      width: 800px;
+      background: linear-gradient(135deg, rgba(31, 77, 95, 0.95), rgba(210, 122, 82, 0.95));
+      padding: 40px;
+      border-radius: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+    `;
+
+    // 克隆结果内容
+    const clone = resultContent.cloneNode(true);
+    clone.style.cssText = `
+      background: rgba(255, 250, 244, 0.95);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 20px;
+    `;
+
+    // 添加分享二维码区域
+    const shareSection = document.createElement('div');
+    shareSection.style.cssText = `
+      background: rgba(255, 250, 244, 0.95);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    `;
+
+    shareSection.innerHTML = `
+      <div style="flex: 1;">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 8px; color: #1d1d1f;">
+          扫码分享给朋友
+        </div>
+        <div style="font-size: 14px; color: #6e6e73;">
+          让他们也来测测自己的 MBTI 性格类型吧！
+        </div>
+      </div>
+      <img src="${qrCodeDataUrl}" alt="分享二维码" style="width: 120px; height: 120px; border-radius: 8px; border: 2px solid #1d1d1f;" />
+    `;
+
+    container.appendChild(clone);
+    container.appendChild(shareSection);
+    document.body.appendChild(container);
+
+    // 使用 html2canvas 生成图片
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      backgroundColor: null,
+      useCORS: true,
+      logging: false
+    });
+
+    // 移除临时容器
+    document.body.removeChild(container);
+
+    // 下载图片
+    const link = document.createElement('a');
+    link.download = `MBTI-${type}-${name}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    showToast('图片已保存！');
+  } catch (error) {
+    console.error('保存图片失败:', error);
+    showToast('保存失败，请重试');
+  }
 }
 
 function showToast(message) {
